@@ -115,7 +115,7 @@ The MCP ecosystem has grown rapidly since Anthropic's November 2024 release. Hun
 - Env vars in config support secrets references (existing OpenClaw secret patterns)
 - MCP tool execution respects existing tool policy (allow/deny lists)
 - **Prompt injection protection:** MCP server responses are sanitized before being passed to the LLM — tool results are marked as untrusted external content and wrapped in injection-resistant framing (similar to how OpenClaw handles web_fetch results). The agent must never treat MCP tool output as system instructions.
-- **Secure credential storage:** MCP server credentials (API keys, passwords, tokens) support reference to external secret managers (GCP Secret Manager, AWS Secrets Manager, etc.) via `secret://` URI scheme. Credentials are resolved at runtime, never stored in plaintext config, and never logged. When GCP Secret Manager is available, it is the preferred storage backend.
+- **Secure credential storage:** MCP server credentials (API keys, passwords, tokens) support reference to external secret managers (GCP Secret Manager, AWS Secrets Manager, etc.) via `secret://` URI scheme. Credentials are resolved at runtime, never stored in plaintext config, and never logged. When GCP Secret Manager is available, it is the preferred storage backend. (See [PR #16663](https://github.com/openclaw/openclaw/pull/16663) — GCP Secret Manager + AWS + Azure + Vault integration, also by this team.)
 
 ### US-6: Secure Credential Management
 **As** an OpenClaw operator,
