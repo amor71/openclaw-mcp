@@ -7,6 +7,21 @@
 
 ---
 
+## Table of Contents
+
+- [1. Problem Statement](#1-problem-statement)
+- [2. Goals](#2-goals)
+- [3. User Stories](#3-user-stories)
+- [4. Functional Requirements](#4-functional-requirements)
+- [5. Non-Functional Requirements](#5-non-functional-requirements)
+- [6. Dependencies](#6-dependencies)
+- [7. Risks & Mitigations](#7-risks--mitigations)
+- [8. Resolved Design Decisions](#8-resolved-design-decisions)
+- [9. Success Criteria](#9-success-criteria)
+- [10. Timeline Estimate](#10-timeline-estimate)
+
+---
+
 ## 1. Problem Statement
 
 OpenClaw currently has no user-facing MCP (Model Context Protocol) support. The ACP translator explicitly ignores MCP server configurations passed by clients. Users cannot connect to external MCP servers (LinkedIn, Notion, filesystem, databases, etc.) through OpenClaw's config.

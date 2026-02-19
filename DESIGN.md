@@ -7,6 +7,40 @@
 
 ---
 
+## Table of Contents
+
+- [1. Architecture Overview](#1-architecture-overview)
+- [2. New Modules](#2-new-modules)
+  - [2.1 Module Structure](#21-module-structure)
+  - [2.2 Module Dependency Graph](#22-module-dependency-graph)
+- [3. Detailed Component Design](#3-detailed-component-design)
+  - [3.1 Config Types](#31-config-types-srcmcpconfigts)
+  - [3.2 McpClientBase](#32-mcpclientbase-srcmcpclient-basets)
+  - [3.3 StdioMcpClient](#33-stdiomcpclient-srcmcpclient-stdiots)
+  - [3.4 SseMcpClient](#34-ssemcpclient-srcmcpclient-ssets)
+  - [3.5 ToolBridge](#35-toolbridge-srcmcptool-bridgets)
+  - [3.6 ResourceBridge](#36-resourcebridge-srcmcpresource-bridgets)
+  - [3.7 SecretResolver](#37-secretresolver-srcmcpsecret-resolverts)
+  - [3.8 McpManager](#38-mcpmanager-srcmcpmanagerts)
+- [4. Integration Points](#4-integration-points)
+  - [4.1 Config Schema](#41-config-schema-srcconfig)
+  - [4.2 Tool Assembly](#42-tool-assembly-srcagentsopenclaw-toolsts)
+  - [4.3 ACP Translator](#43-acp-translator-srcacptranslatorts)
+  - [4.4 External Content Source](#44-external-content-source-srcsecurityexternal-contentts)
+  - [4.5 Gateway Lifecycle](#45-gateway-lifecycle)
+  - [4.6 Tool Policy Integration](#46-tool-policy-integration)
+- [5. Security Design](#5-security-design)
+  - [5.1 Prompt Injection Defense](#51-prompt-injection-defense-defense-in-depth)
+  - [5.2 Credential Security](#52-credential-security)
+  - [5.3 Process Isolation](#53-process-isolation)
+- [6. Error Handling Strategy](#6-error-handling-strategy)
+- [7. Testing Strategy & Automation](#7-testing-strategy--automation)
+- [8. Dependencies](#8-dependencies)
+- [9. Migration & Backwards Compatibility](#9-migration--backwards-compatibility)
+- [10. Design Decisions](#10-design-decisions-all-resolved)
+
+---
+
 ## 1. Architecture Overview
 
 ```mermaid
@@ -1236,7 +1270,7 @@ No other new dependencies. TypeBox, child_process, and the security module are a
 
 ---
 
-## 10. Open Design Decisions
+## 10. Design Decisions (All Resolved)
 
 | # | Decision | Resolution | Status |
 |---|----------|------------|--------|
@@ -1245,5 +1279,5 @@ No other new dependencies. TypeBox, child_process, and the security module are a
 | 3 | MCP resource support | **Include in v1** — inject resources into agent context | ✅ Decided |
 | 4 | Config location | `agents.defaults.mcp` + `agents.list[].mcp` (follows existing pattern) | ✅ Decided |
 | 5 | Tool policy interaction | By prefixed name — zero changes to policy engine | ✅ Decided |
-| 6 | Tool re-discovery | On reconnect only — no polling for tool changes | Proposed |
-| 7 | Config hot reload | Defer to v2 — requires gateway restart for MCP changes | Proposed |
+| 6 | Tool re-discovery | On reconnect only — no polling for tool changes | ✅ Decided |
+| 7 | Config hot reload | Defer to v2 — requires gateway restart for MCP changes | ✅ Decided |
