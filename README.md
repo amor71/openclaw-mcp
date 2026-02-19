@@ -40,7 +40,7 @@ Users will be able to configure MCP servers in `openclaw.json` and have their to
 | Phase | Document | Status |
 |-------|----------|--------|
 | Requirements | [REQUIREMENTS.md](./REQUIREMENTS.md) | 📋 In Review |
-| Design | DESIGN.md | ⏳ Pending |
+| Design | [DESIGN.md](./DESIGN.md) | 📋 In Review |
 | Plan | PLAN.md | ⏳ Pending |
 | Implementation | PR to openclaw/openclaw | ⏳ Pending |
 
