@@ -43,10 +43,9 @@ The MCP ecosystem has grown rapidly since Anthropic's November 2024 release. Hun
 4. **Support SSE/HTTP transport** — remote MCP servers via URL (with auth headers)
 5. **MCP servers start/stop with agent sessions** — proper lifecycle management
 6. **Tool calls route correctly** — agent tool calls → MCP server → results back to agent
+7. **Resource support** — expose MCP resources as agent context (read-only data injection)
 
 ### 2.2 Secondary Goals (Nice to Have)
-
-7. **Resource support** — expose MCP resources as agent context
 8. **Prompt support** — expose MCP prompt templates
 9. **Hot reload** — restart MCP servers on config change without restarting OpenClaw
 
@@ -297,13 +296,15 @@ The MCP ecosystem has grown rapidly since Anthropic's November 2024 release. Hun
 
 ---
 
-## 8. Open Questions
+## 8. Resolved Design Decisions
 
-1. **Tool namespacing strategy** — Should it be `mcp_server_tool` (verbose but clear) or `server_tool` (shorter)? Or let users configure?
-2. **Resource/prompt support** — Should v1 support MCP resources (injecting into context) or defer entirely?
-3. **Config location** — `agents.defaults.mcp` vs top-level `mcp` section? Per-agent is cleaner but top-level is simpler.
-4. **Lazy vs eager startup** — Start all servers on boot, or only when needed? Lazy saves resources but adds latency on first call.
-5. **Interaction with tool policy** — How do MCP tools interact with existing `toolPolicy` allow/deny lists? By prefixed name?
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Tool namespacing | `mcp_{server}_{tool}` default, configurable via `toolPrefix` |
+| 2 | Resource support | **Included in v1** — injected into agent context as untrusted |
+| 3 | Config location | `agents.defaults.mcp` + `agents.list[].mcp` (follows existing pattern) |
+| 4 | Startup strategy | Eager (parallel on boot) default, optional `lazy: true` per-server |
+| 5 | Tool policy | By prefixed name — zero changes to policy engine |
 
 ---
 
