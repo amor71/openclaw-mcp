@@ -39,13 +39,13 @@ The MCP ecosystem has grown rapidly since Anthropic's November 2024 release. Hun
 
 1. **Users can configure MCP servers in `openclaw.json`** — per-agent or in defaults
 2. **MCP server tools appear as agent tools** — the LLM sees and calls them like any native tool
-3. **Support stdio transport** — the most common MCP transport (command + args + env)
-4. **MCP servers start/stop with agent sessions** — proper lifecycle management
-5. **Tool calls route correctly** — agent tool calls → MCP server → results back to agent
+3. **Support stdio transport** — local MCP servers as child processes (command + args + env)
+4. **Support SSE/HTTP transport** — remote MCP servers via URL (with auth headers)
+5. **MCP servers start/stop with agent sessions** — proper lifecycle management
+6. **Tool calls route correctly** — agent tool calls → MCP server → results back to agent
 
 ### 2.2 Secondary Goals (Nice to Have)
 
-6. **SSE/HTTP transport** — connect to remote MCP servers via URL
 7. **Resource support** — expose MCP resources as agent context
 8. **Prompt support** — expose MCP prompt templates
 9. **Hot reload** — restart MCP servers on config change without restarting OpenClaw
