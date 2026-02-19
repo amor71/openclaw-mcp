@@ -37,8 +37,6 @@
 - [7. Testing Strategy & Automation](#7-testing-strategy--automation)
 - [8. Dependencies](#8-dependencies)
 - [9. Migration & Backwards Compatibility](#9-migration--backwards-compatibility)
-- [10. Design Decisions](#10-design-decisions-all-resolved)
-
 ---
 
 ## 1. Architecture Overview
@@ -1270,14 +1268,3 @@ No other new dependencies. TypeBox, child_process, and the security module are a
 
 ---
 
-## 10. Design Decisions (All Resolved)
-
-| # | Decision | Resolution | Status |
-|---|----------|------------|--------|
-| 1 | Tool name format | `mcp_{server}_{tool}` default, configurable via `toolPrefix` | ✅ Decided |
-| 2 | Lazy vs eager server start | Eager (parallel on boot) default, optional `lazy: true` per-server | ✅ Decided |
-| 3 | MCP resource support | **Include in v1** — inject resources into agent context | ✅ Decided |
-| 4 | Config location | `agents.defaults.mcp` + `agents.list[].mcp` (follows existing pattern) | ✅ Decided |
-| 5 | Tool policy interaction | By prefixed name — zero changes to policy engine | ✅ Decided |
-| 6 | Tool re-discovery | On reconnect only — no polling for tool changes | ✅ Decided |
-| 7 | Config hot reload | Defer to v2 — requires gateway restart for MCP changes | ✅ Decided |
