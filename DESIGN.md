@@ -9,37 +9,59 @@
 
 ## 1. Architecture Overview
 
-```
-┌──────────────────────────────────────────────────────┐
-│                    OpenClaw Gateway                    │
-│                                                        │
-│  ┌──────────────┐    ┌──────────────────────────────┐ │
-│  │  Agent Loop   │    │      MCP Manager             │ │
-│  │              │    │                              │ │
-│  │  Native Tools │    │  ┌────────┐  ┌────────┐    │ │
-│  │  Plugin Tools │◄──►│  │ Client │  │ Client │    │ │
-│  │  MCP Tools ◄──┼────┤  │ stdio  │  │  SSE   │    │ │
-│  │              │    │  └───┬────┘  └───┬────┘    │ │
-│  └──────────────┘    │      │            │          │ │
-│                      └──────┼────────────┼──────────┘ │
-└─────────────────────────────┼────────────┼────────────┘
-                              │            │
-                    ┌─────────▼──┐  ┌──────▼───────┐
-                    │ Local MCP  │  │ Remote MCP   │
-                    │ Server     │  │ Server       │
-                    │ (child     │  │ (HTTP/SSE)   │
-                    │  process)  │  │              │
-                    └────────────┘  └──────────────┘
+```mermaid
+graph TB
+    subgraph Gateway["OpenClaw Gateway"]
+        subgraph AgentLoop["Agent Loop"]
+            NT[Native Tools]
+            PT[Plugin Tools]
+            MT[MCP Tools]
+        end
+        subgraph Manager["MCP Manager"]
+            SC[StdioMcpClient]
+            SSE[SseMcpClient]
+        end
+        MT <--> Manager
+    end
+    SC <-->|stdin/stdout JSON-RPC| Local["Local MCP Server<br/>(child process)"]
+    SSE <-->|HTTP/SSE| Remote["Remote MCP Server<br/>(HTTP/SSE)"]
 ```
 
 ### Data Flow
 
-1. **Config load** → `McpManager` reads `mcp.servers` from agent config
-2. **Gateway start** → `McpManager.start()` connects to all enabled servers (parallel)
-3. **Tool discovery** → Each client calls `tools/list`, schemas are bridged to `AgentTool`
-4. **Tool assembly** → `createOpenClawTools()` merges native + plugin + MCP tools
-5. **Tool call** → Agent calls `mcp_linkedin_get_feed` → routed to correct MCP client → result wrapped as untrusted → returned to agent
-6. **Shutdown** → `McpManager.shutdown()` cleanly stops all servers
+```mermaid
+sequenceDiagram
+    participant Config as openclaw.json
+    participant GW as Gateway
+    participant Mgr as McpManager
+    participant Client as McpClient
+    participant Server as MCP Server
+    participant Agent as Agent Loop
+
+    GW->>Config: Read mcp.servers
+    GW->>Mgr: start()
+    Mgr->>Client: connect() [parallel per server]
+    Client->>Server: initialize
+    Server-->>Client: capabilities
+    Client->>Server: tools/list
+    Server-->>Client: tool definitions
+    Client->>Client: Bridge to AgentTool
+
+    Note over GW,Agent: Runtime — tool call flow
+
+    Agent->>Mgr: mcp_linkedin_get_feed(params)
+    Mgr->>Client: callTool("get_feed", params)
+    Client->>Server: tools/call
+    Server-->>Client: result (content[])
+    Client->>Client: wrapExternalContent()
+    Client-->>Agent: wrapped untrusted result
+
+    Note over GW,Mgr: Shutdown
+
+    GW->>Mgr: shutdown()
+    Mgr->>Client: disconnect()
+    Client->>Server: SIGTERM / close
+```
 
 ---
 
@@ -68,19 +90,16 @@ src/mcp/
 
 ### 2.2 Module Dependency Graph
 
-```
-openclaw-tools.ts
-       │
-       ▼
-  McpManager ──────► SecretResolver
-       │
-       ├──► StdioMcpClient ──► McpClientBase ──► ToolBridge
-       │                                              │
-       └──► SseMcpClient ────► McpClientBase ──► ToolBridge
-                                                      │
-                                                      ▼
-                                            wrapExternalContent()
-                                         (src/security/external-content.ts)
+```mermaid
+graph TD
+    OT[openclaw-tools.ts] --> Mgr[McpManager]
+    Mgr --> SR[SecretResolver]
+    Mgr --> SC[StdioMcpClient]
+    Mgr --> SSE[SseMcpClient]
+    SC --> Base[McpClientBase]
+    SSE --> Base
+    Base --> TB[ToolBridge]
+    TB --> EC["wrapExternalContent()<br/>(security/external-content.ts)"]
 ```
 
 ---
@@ -847,49 +866,31 @@ No changes needed to the tool policy engine — it already supports string match
 
 ### 5.1 Prompt Injection Defense (Defense in Depth)
 
-```
-MCP Server Response
-        │
-        ▼
-┌─────────────────────┐
-│ 1. Pattern Detection │  detectSuspiciousPatterns() — log warning
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│ 2. Marker Sanitize   │  replaceMarkers() — prevent boundary escape
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│ 3. Untrusted Wrap    │  wrapExternalContent() — SECURITY NOTICE + boundary markers
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│ 4. Details Strip     │  AgentToolResult.details is stripped on compaction
-└────────┬────────────┘
-         │
-         ▼
-     Agent sees wrapped,
-     clearly-marked external content
+```mermaid
+flowchart TD
+    A["MCP Server Response"] --> B["1. Pattern Detection<br/>detectSuspiciousPatterns() — log warning"]
+    B --> C["2. Marker Sanitize<br/>replaceMarkers() — prevent boundary escape"]
+    C --> D["3. Untrusted Wrap<br/>wrapExternalContent() — SECURITY NOTICE + boundary markers"]
+    D --> E["4. Details Strip<br/>AgentToolResult.details stripped on compaction"]
+    E --> F["Agent sees wrapped,<br/>clearly-marked external content"]
+
+    style A fill:#f66,stroke:#333,color:#fff
+    style F fill:#6c6,stroke:#333,color:#fff
 ```
 
 This is the **exact same pipeline** used for `web_fetch` results, which already handles untrusted web content. We're reusing proven infrastructure.
 
 ### 5.2 Credential Security
 
-```
-Config: "LINKEDIN_PASSWORD": "secret://gcp/linkedin-password"
-        │
-        ▼
-┌────────────────────────┐
-│ SecretResolver          │
-│  1. Parse URI scheme    │
-│  2. Resolve at runtime  │  ← Only at MCP server spawn time
-│  3. Never log values    │
-│  4. Pass to child proc  │  ← Via env vars (in-memory only)
-└────────────────────────┘
+```mermaid
+flowchart LR
+    Config["openclaw.json<br/>secret://gcp/linkedin-password"] --> Parse["1. Parse URI scheme"]
+    Parse --> Resolve["2. Resolve at runtime<br/>(spawn time only)"]
+    Resolve --> Redact["3. Never log values"]
+    Redact --> Env["4. Pass to child process<br/>(env vars, in-memory only)"]
+
+    style Config fill:#369,stroke:#333,color:#fff
+    style Env fill:#693,stroke:#333,color:#fff
 ```
 
 **Key properties:**
